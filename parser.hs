@@ -8,10 +8,9 @@ symbol = oneOf "!#$%&|*+-/:<=>?@^_~"
 spaces :: Parser()
 spaces = skipMany1 space
 
-readExpr :: String -> String
 readExpr input = case parse parseExpr "lisp" input of
-  Left err -> "No match" ++ show err
-  Right val -> "Found value"
+    Left err -> "No match: " ++ show err
+    Right val -> "Found " ++ show val
 
 main :: IO ()
 main = do
@@ -69,3 +68,19 @@ parseQuoted = do
   char '\''
   x <- parseExpr
   return $ List [Atom "quote", x]
+
+showVal :: LispVal -> String
+showVal (String contents) = "\"" ++ contents ++ "\""
+showVal (Atom name) = name
+showVal (Number contents) = show contents
+showVal (Bool True) = "#t"
+showVal (Bool False) = "#f"
+
+showVal (List contents) = "(" ++ unwordsList contents ++ ")"
+showVal (DottedList head tail) = "(" ++ unwordsList head ++ "." ++ showVal tail ++ ")"
+
+instance Show LispVal where show = showVal
+
+unwordsList :: [LispVal] -> String
+unwordsList = unwords . map showVal
+
