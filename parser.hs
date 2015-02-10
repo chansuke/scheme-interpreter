@@ -8,14 +8,19 @@ symbol = oneOf "!#$%&|*+-/:<=>?@^_~"
 spaces :: Parser()
 spaces = skipMany1 space
 
+<<<<<<< HEAD
 readExpr input = case parse parseExpr "lisp" input of
     Left err -> "No match: " ++ show err
     Right val -> "Found " ++ show val
+=======
+readExpr :: String -> LispVal
+readExpr input = case parse parseExpr "lisp" input of
+    Left err -> String $ "No match: " ++ show err
+    Right val -> val
+>>>>>>> origin/master
 
 main :: IO ()
-main = do
-     args <- getArgs
-     putStrLn (readExpr (args !! 0))
+main = getArgs >>= print . eval . readExpr . head
 
 data LispVal = Atom String
       |List [LispVal]
@@ -74,13 +79,31 @@ showVal (String contents) = "\"" ++ contents ++ "\""
 showVal (Atom name) = name
 showVal (Number contents) = show contents
 showVal (Bool True) = "#t"
+<<<<<<< HEAD
 showVal (Bool False) = "#f"
+=======
+showVal (Bool False) = "#t"
+>>>>>>> origin/master
 
 showVal (List contents) = "(" ++ unwordsList contents ++ ")"
 showVal (DottedList head tail) = "(" ++ unwordsList head ++ "." ++ showVal tail ++ ")"
 
+<<<<<<< HEAD
 instance Show LispVal where show = showVal
 
 unwordsList :: [LispVal] -> String
 unwordsList = unwords . map showVal
 
+=======
+unwordsList :: [LispVal] -> String
+unwordsList = unwords . map showVal
+
+instance Show LispVal where show = showVal
+
+eval :: LispVal -> LispVal
+eval val@(String _) = val
+eval val@(Number _) = val
+eval val@(Bool _) = val
+eval (List[Atom "quote", val]) = val
+
+>>>>>>> origin/master
