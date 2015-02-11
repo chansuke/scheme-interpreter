@@ -113,3 +113,4 @@ unpackNum (String n) = let parsed = reads n :: [(Integer, String)] in
               else fst $ parsed !! 0
 unpackNum (List [n]) = unpackNum n
 unpackNum _ = 0
+
