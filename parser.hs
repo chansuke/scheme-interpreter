@@ -1,10 +1,11 @@
 {-# LANGUAGE ExistentialQuantification #-}
 module Main where
 
-import Text.ParserCombinators.Parsec hiding (spaces)
-import System.Environment
 import Control.Monad
 import Control.Monad.Error
+import Text.ParserCombinators.Parsec hiding (spaces)
+import System.Environment
+import System.IO
 
 symbol :: Parser Char
 symbol = oneOf "!#$%&|*+-/:<=>?@^_~"
@@ -17,13 +18,17 @@ readExpr input = case parse parseExpr "lisp" input of
     Left err -> throwError $ Parser err
     Right val -> return val
 
+runRepl :: IO ()
+runRepl = until_ (== "quit") (readPrompt "Lisp>>> ") evalAndPrint
+
 data Unpacker = forall a.Eq a => AnyUnpacker (LispVal -> ThrowsError a)
 
 main :: IO ()
-main = do
-  args <- getArgs
-  evaled <- return $ liftM show $ readExpr (args !! 0) >>= eval
-  putStrLn $ extractValue $ trapError evaled
+main = do args <- getArgs
+          case length args of
+            0 -> runRepl
+            1 -> evalAndPrint $ args !! 0
+            otherwise -> putStrLn "Program takes only 0 or 1 argument"
 
 data LispVal = Atom String
       |List [LispVal]
@@ -259,3 +264,21 @@ equal [arg1, arg2] = do
 
 equal badArgList = throwError $ NumArgs 2 badArgList
 
+flushStr :: String -> IO ()
+flushStr s = putStr s >> hFlush stdout
+
+readPrompt :: String -> IO String
+readPrompt prompt = flushStr prompt >> getLine
+
+evalString :: String -> IO String
+evalString expr = return $ extractValue $ trapError (liftM show $ readExpr expr >>= eval)
+
+evalAndPrint :: String -> IO ()
+evalAndPrint expr = evalString expr >>= putStrLn
+
+until_ :: Monad m => (a -> Bool) -> m a -> (a -> m ()) -> m ()
+until_ pred prompt action = do
+    result <- prompt
+    if pred result
+       then return ()
+       else action result >> until_ pred prompt action
